@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redecanais AutoPlayer</title>
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --dark-blue: #1e40af;
+            --dark-gray: #0f172a;
+            --medium-gray: #1e293b;
+            --light-gray: #64748b;
+            --accent: #3b82f6;
+            --text-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            width: 380px;
+            height: 480px;
+            background: linear-gradient(145deg, var(--dark-gray) 0%, #1a1f35 100%);
+            color: var(--text-light);
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(30, 64, 175, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+            padding: 25px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            font-weight: 400;
+            position: relative;
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(100, 116, 139, 0.3);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spinner 1.2s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .spinner::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border: 3px solid transparent;
+            border-top: 3px solid rgba(59, 130, 246, 0.5);
+            border-radius: 50%;
+            animation: spinner 1.5s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite reverse;
+        }
+
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: var(--text-light);
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, var(--text-light), #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer {
+            background: linear-gradient(90deg, var(--medium-gray) 0%, var(--dark-gray) 100%);
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .heart {
+            color: #ef4444;
+            margin: 0 4px;
+            animation: heartbeat 2s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .author {
+            color: var(--accent);
+            font-weight: 600;
+            margin-left: 3px;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .footer p {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        .floating-element {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            top: 60%;
+            right: 10%;
+            animation-delay: -2s;
+        }
+
+        .floating-element:nth-child(3) {
+            bottom: 30%;
+            left: 15%;
+            animation-delay: -4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .header h1::after {
+            content: '🎬';
+            margin-left: 10px;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.7));
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        @media (max-height: 450px) {
+            body {
+                height: 450px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+        }
+
+    .status {
+        background: linear-gradient(135deg, rgba(30, 64, 175, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        backdrop-filter: blur(10px);
+    }
+
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background: linear-gradient(135deg, #10b981, #34d399);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    .status-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #34d399;
+        text-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .info-item {
+        text-align: center;
+        padding: 12px;
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 8px;
+        border: 1px solid rgba(71, 85, 105, 0.3);
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: var(--light-gray);
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-light);
+        text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+
+    .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+        left: 100%;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, var(--medium-gray) 0%, var(--light-gray) 100%);
+        color: var(--text-light);
+        border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+    }
+
+    .episodes-section {
+        margin-top: 20px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--text-light);
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+    }
+
+    .season-selector {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .season-btn {
+        padding: 8px 16px;
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 20px;
+        color: var(--text-light);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .season-btn:hover {
+        background: rgba(37, 99, 235, 0.2);
+        border-color: var(--primary-blue);
+    }
+
+    .season-btn.active {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+        border-color: var(--primary-blue);
+        color: white;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+    }
+
+    .episodes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 4px;
+    }
+
+    .episode-btn {
+        aspect-ratio: 1;
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 8px;
+        color: var(--text-light);
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+    }
+
+    .episode-btn:hover {
+        background: rgba(37, 99, 235, 0.2);
+        border-color: var(--primary-blue);
+        transform: translateY(-2px);
+    }
+
+    .episode-btn.current {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+        border-color: var(--primary-blue);
+        color: white;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
+    }
+
+    .episode-btn.watched {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        border-color: #10b981;
+        color: white;
+    }
+
+    .episodes-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .episodes-grid::-webkit-scrollbar-track {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 3px;
+    }
+
+    .episodes-grid::-webkit-scrollbar-thumb {
+        background: var(--primary-blue);
+        border-radius: 3px;
+    }
+
+    .episodes-grid::-webkit-scrollbar-thumb:hover {
+        background: var(--dark-blue);
+    }
+
+    .progress-info {
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-light);
+        margin: 8px 0;
+        text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+
+    .series-id {
+        margin-top: 12px;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        font-size: 11px;
+        border: 1px solid rgba(71, 85, 105, 0.3);
+    }
+
+    .series-id-label {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--accent);
+    }
+
+    .series-id-value {
+        word-break: break-all;
+        color: var(--text-light);
+        opacity: 0.9;
+    }
+
+    @media (max-width: 400px) {
+        .episodes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .season-selector {
+            justify-content: center;
+        }
+    }
+    </style>
+</head>
+<body>
+    <!-- Elementos decorativos flutuantes -->
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+
+    <div class="header">
+        <div class="logo-container">
+            <img src="https://redecanais.sh/uploads/custom-logo.png?1" alt="Redecanais Logo" class="logo">
+        </div>
+        <h1>Redecanais AutoPlayer</h1>
+        <p>Seu player inteligente de séries</p>
+    </div>
+
+    <div class="content" id="app">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Carregando...</p>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

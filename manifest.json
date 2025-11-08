@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "RedeCanais Auto-player",
+  "version": "1.0.0",
+  "description": "Player automático - RC",
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://redecanais.lc/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://redecanais.lc/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js", "content.js", "notification.css"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "img/channels4_profile.jpg",
+      "32": "img/channels4_profile.jpg",
+      "48": "img/channels4_profile.jpg",
+      "128": "img/channels4_profile.jpg"
+    }
+  },
+  "icons": {
+    "16": "img/channels4_profile.jpg",
+    "32": "img/channels4_profile.jpg",
+    "48": "img/channels4_profile.jpg",
+    "128": "img/channels4_profile.jpg"
+  }
+}

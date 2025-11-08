@@ -1,0 +1,150 @@
+.videojs-debug-notification {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #4CAF50;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  max-width: 400px;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.videojs-debug-notification.error {
+  border-left-color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.videojs-debug-notification.warning {
+  border-left-color: #ff9800;
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.videojs-debug-notification.info {
+  border-left-color: #2196F3;
+  background: rgba(33, 150, 243, 0.1);
+}
+
+.videojs-debug-notification.success {
+  border-left-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.videojs-debug-header {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.videojs-debug-content {
+  line-height: 1.4;
+}
+
+.videojs-debug-time {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 5px;
+}
+
+.videojs-debug-progress {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.videojs-debug-progress-bar {
+  height: 100%;
+  background: #4CAF50;
+  width: 100%;
+  transition: width 0.1s linear;
+}
+
+.videojs-debug-close {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.videojs-debug-close:hover {
+  opacity: 1;
+}
+
+.videojs-debug-stats {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  z-index: 9999;
+  max-width: 300px;
+  border-left: 4px solid #2196F3;
+}
+
+.videojs-debug-stats h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #4CAF50;
+}
+
+.videojs-debug-stats div {
+  margin: 5px 0;
+}
+
+.videojs-debug-controls {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  z-index: 9999;
+  border-left: 4px solid #FF9800;
+}
+
+.videojs-debug-controls button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.videojs-debug-controls button:hover {
+  background: #45a049;
+}
+
+.notification-fade-out {
+  animation: fadeOut 0.5s ease-in-out 2.5s forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
