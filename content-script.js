@@ -1208,10 +1208,9 @@ class PlayerOverlay {
 
     function extractEpisodeInfoFromTitle(titleText) {
         console.log('🔍 Extraindo informações do título:', titleText);
-        
-        // Padrão 1: "Os Simpsons - 1ª Temporada - Episodio 04 - Problemas em casa" (com "Episodio" sem acento)
+
         let match = titleText.match(/(.+?)\s*-\s*(\d+)[ªa]\s*Temporada\s*-\s*Episodio\s*(\d+)(?:\s*-\s*(.+))?/i);
-        
+
         if (match) {
             return {
                 seriesName: match[1].trim(),
@@ -1221,8 +1220,7 @@ class PlayerOverlay {
                 fullTitle: titleText
             };
         }
-        
-        // Padrão 2: "Série - 1ª Temporada - Episódio 04" (com acento)
+
         match = titleText.match(/(.+?)\s*-\s*(\d+)[ªa]\s*Temporada\s*-\s*Episódio\s*(\d+)(?:\s*-\s*(.+))?/i);
         if (match) {
             return {
@@ -1233,8 +1231,7 @@ class PlayerOverlay {
                 fullTitle: titleText
             };
         }
-        
-        // Padrão 3: "Série - Temporada 1 Episódio 5" (sem hífen)
+
         match = titleText.match(/(.+?)\s*-\s*Temporada\s*(\d+)\s*Episódio\s*(\d+)/i);
         if (match) {
             return {
@@ -1245,8 +1242,7 @@ class PlayerOverlay {
                 fullTitle: titleText
             };
         }
-        
-        // Padrão 4: "Série - Temporada 1 Episodio 5" (sem acento)
+
         match = titleText.match(/(.+?)\s*-\s*Temporada\s*(\d+)\s*Episodio\s*(\d+)/i);
         if (match) {
             return {
@@ -1257,8 +1253,7 @@ class PlayerOverlay {
                 fullTitle: titleText
             };
         }
-        
-        // Padrão 5: "1ª Temporada - Episodio 04" (sem nome da série)
+
         match = titleText.match(/(\d+)[ªa]\s*Temporada\s*-\s*Episodio\s*(\d+)(?:\s*-\s*(.+))?/i);
         if (match) {
             return {
@@ -1269,12 +1264,11 @@ class PlayerOverlay {
                 fullTitle: titleText
             };
         }
-        
+
         console.log('❌ Padrão do título não reconhecido:', titleText);
         return null;
     }
 
-    // Adicionar função auxiliar para extrair nome da série da URL
     function extractSeriesNameFromUrl() {
         const url = window.location.href;
         const match = url.match(/\/([^\/]+?)(?:-\d+a-temporada|$)/);
