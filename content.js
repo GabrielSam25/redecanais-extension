@@ -211,7 +211,6 @@ export class VideoJSDebugContent {
     this.setupFrameCommunication();
     this.setupMessageListener();
     
-    // Observa mudanças no DOM
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
@@ -230,12 +229,10 @@ export class VideoJSDebugContent {
   }
 }
 
-// Exportação para uso direto
 export function initializeVideoJSDebugContent() {
   return new VideoJSDebugContent();
 }
 
-// Auto-inicialização quando importado como script
 if (typeof module === 'undefined') {
   initializeVideoJSDebugContent();
 }
