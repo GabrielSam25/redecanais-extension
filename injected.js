@@ -261,13 +261,10 @@ export class VideoJSDebugger {
   }
 }
 
-// Exportação para uso direto
 export function initializeVideoJSDebugger() {
   return new VideoJSDebugger();
 }
 
-// Auto-inicialização quando importado como script
 if (typeof module === 'undefined') {
-  // Está sendo executado diretamente no navegador
   initializeVideoJSDebugger();
 }
