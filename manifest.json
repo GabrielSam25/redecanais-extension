@@ -10,14 +10,14 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://redecanais.lc/*"
+    "https://redecanais.pe/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://redecanais.lc/*"],
+      "matches": ["https://redecanais.pe/*"],
       "js": ["content-script.js"],
       "run_at": "document_end"
     }
