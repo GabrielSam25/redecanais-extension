@@ -492,7 +492,7 @@ class VideoJSAutoPlayer {
 
 class RealTimeEpisodeExtractor {
     constructor() {
-        this.baseUrl = 'https://redecanais.lc';
+        this.baseUrl = 'https://redecanais.pe';
     }
 
     extractRealTimeLinks() {
@@ -693,7 +693,7 @@ class PlayerOverlay {
         return `
             <div class="ap-container">
                 <div class="ap-header">
-                     <img src="https://redecanais.sh/uploads/custom-logo.png?1" alt="Redecanais Logo" class="logo">
+                     <img src="https://redecanais.pe/uploads/custom-logo.png?1" alt="Redecanais Logo" class="logo">
                     <button class="ap-close" id="ap-close">✕</button>
                 </div>
 
