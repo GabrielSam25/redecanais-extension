@@ -492,238 +492,127 @@ class VideoJSAutoPlayer {
 
 class RealTimeEpisodeExtractor {
     constructor() {
-        this.baseUrl = 'https://redecanais.pe';
+        this.baseUrl = 'https://redecanais.lc';
     }
 
     extractRealTimeLinks() {
         const episodes = [];
         
-        console.log('🔍 Iniciando extração da série Os Simpsons...');
-        
-        // 🆕 Estratégia específica para Os Simpsons
-        const seasonMarkers = this.findSeasonMarkers();
-        console.log(`🏷️ Marcadores de temporada encontrados: ${seasonMarkers.length}`);
-
-        // Se não encontrou temporadas, tentar extração alternativa
-        if (seasonMarkers.length === 0) {
-            console.log('🔄 Nenhum marcador de temporada encontrado, usando extração alternativa...');
-            return this.extractAllEpisodesAsSeasons();
+        // 🆕 PRIMEIRO: Verificar se é uma série sem temporadas
+        if (this.isSingleSeasonSeries()) {
+            console.log('🔍 Detectada série de temporada única');
+            const singleSeasonEpisodes = this.extractEpisodesAsSingleSeason();
+            return this.organizeEpisodes(singleSeasonEpisodes);
         }
 
-        seasonMarkers.forEach((marker, index) => {
+        // Método original com temporadas
+        const seasonMarkers = this.findSeasonMarkers();
+        
+        // 🆕 SE não encontrou temporadas, tratar como temporada única
+        if (seasonMarkers.length === 0) {
+            console.log('🔍 Nenhuma temporada encontrada, extraindo como temporada única');
+            const singleSeasonEpisodes = this.extractEpisodesAsSingleSeason();
+            return this.organizeEpisodes(singleSeasonEpisodes);
+        }
+
+        seasonMarkers.forEach(marker => {
             const seasonNumber = this.extractSeasonNumber(marker.textContent);
-            console.log(`📋 Processando Temporada ${seasonNumber}`);
-            
             const seasonEpisodes = this.extractEpisodesFromSeason(marker, seasonNumber);
-            console.log(`✅ Temporada ${seasonNumber}: ${seasonEpisodes.length} episódios`);
-            
             episodes.push(...seasonEpisodes);
         });
 
         return this.organizeEpisodes(episodes);
     }
 
-    // 🆕 NOVO MÉTODO: Extração alternativa para séries complexas
-    extractAllEpisodesAsSeasons() {
+    // 🆕 NOVO MÉTODO: Verificar se é série de temporada única
+    isSingleSeasonSeries() {
+        const pageText = document.body.textContent;
+        
+        // Se tem episódios mas não tem marcadores de temporada
+        const hasEpisodes = /Episódio\s+\d+/i.test(pageText);
+        const hasSeasonMarkers = /Temporada\s*\d+/i.test(pageText);
+        
+        console.log('📊 Análise da página:', {
+            hasEpisodes,
+            hasSeasonMarkers,
+            pageTitle: document.title
+        });
+        
+        return hasEpisodes && !hasSeasonMarkers;
+    }
+
+    // 🆕 NOVO MÉTODO: Extrair episódios como temporada única
+    extractEpisodesAsSingleSeason() {
         const episodes = [];
-        console.log('🎯 Usando extração alternativa para Os Simpsons...');
+        console.log('🎯 Iniciando extração como temporada única');
         
-        // Buscar todos os elementos que podem conter episódios
-        const allElements = document.querySelectorAll('*');
-        let currentSeason = 1;
-        let episodeCounter = 1;
+        // Procurar todos os elementos que podem ser episódios
+        const possibleEpisodeElements = this.findAllPossibleEpisodeElements();
         
-        allElements.forEach(element => {
-            // Verificar se é um marcador de temporada
-            if (this.isSeasonMarker(element)) {
-                const seasonNumber = this.extractSeasonNumber(element.textContent);
-                if (seasonNumber) {
-                    currentSeason = seasonNumber;
-                    episodeCounter = 1;
-                    console.log(`🔄 Mudando para Temporada ${currentSeason}`);
-                }
-            }
-            
-            // Verificar se é um episódio
-            if (this.isEpisodeMarker(element)) {
-                const episodeData = this.parseEpisodeElement(element, currentSeason);
-                if (episodeData) {
-                    // Garantir numeração sequencial
-                    episodeData.episode = episodeCounter;
-                    episodes.push(episodeData);
-                    console.log(`✅ Episódio T${currentSeason}E${episodeCounter} encontrado`);
-                    episodeCounter++;
-                }
+        possibleEpisodeElements.forEach(element => {
+            const episodeData = this.parseEpisodeElement(element, 1); // Sempre temporada 1
+            if (episodeData) {
+                console.log('✅ Episódio encontrado:', episodeData);
+                episodes.push(episodeData);
             }
         });
-
+        
         console.log(`📦 Total de episódios encontrados: ${episodes.length}`);
-        return this.organizeEpisodes(episodes);
-    }
-
-    // 🆕 MELHORAR: Detecção de marcadores de temporada
-    findSeasonMarkers() {
-        const markers = [];
-        
-        console.log('🔍 Procurando marcadores de temporada...');
-        
-        // Estratégia 1: Buscar por spans com font-size grande
-        const largeSpans = document.querySelectorAll('span[style*="font-size"]');
-        largeSpans.forEach(span => {
-            const text = span.textContent.trim();
-            if (this.isSeasonText(text)) {
-                console.log(`🏷️ Marcador encontrado (span): "${text}"`);
-                markers.push(span);
-            }
-        });
-
-        // Estratégia 2: Buscar todos os strong que contenham "Temporada"
-        const allStrongElements = document.querySelectorAll('strong');
-        allStrongElements.forEach(strong => {
-            const text = strong.textContent.trim();
-            if (this.isSeasonText(text) && !markers.includes(strong)) {
-                console.log(`🏷️ Marcador encontrado (strong): "${text}"`);
-                markers.push(strong);
-            }
-        });
-
-        // Estratégia 3: Buscar por elementos com texto específico de temporada
-        const elementsWithSeason = Array.from(document.querySelectorAll('*')).filter(el => {
-            const text = el.textContent.trim();
-            return this.isSeasonText(text) && 
-                   !markers.some(marker => marker.contains(el) || el.contains(marker));
-        });
-
-        elementsWithSeason.forEach(el => {
-            console.log(`🏷️ Marcador encontrado (elemento): "${el.textContent.trim()}"`);
-            markers.push(el);
-        });
-
-        // Ordenar pela posição no DOM
-        const sortedMarkers = markers.sort((a, b) => {
-            return this.getElementPosition(a) - this.getElementPosition(b);
-        });
-
-        console.log(`🎯 Total de marcadores ordenados: ${sortedMarkers.length}`);
-        return sortedMarkers;
-    }
-
-    // 🆕 MELHORAR: Detecção de texto de temporada
-    isSeasonText(text) {
-        const normalized = text.toLowerCase().trim();
-        const isSeason = (normalized.includes('temporada') || normalized.includes('prelúdio')) && 
-                        (normalized.includes('ª') || normalized.includes('°') || /\d/.test(normalized) || normalized.includes('legendado'));
-        
-        if (isSeason) {
-            console.log(`✅ Texto identificado como temporada: "${text}"`);
-        }
-        
-        return isSeason;
-    }
-
-    // 🆕 MELHORAR: Extração de número da temporada
-    extractSeasonNumber(text) {
-        console.log(`🔢 Extraindo número da temporada de: "${text}"`);
-        
-        // Padrões: "1ª Temporada", "2° Temporada", "Temporada 3", "10ª Temporada", "Prelúdio (Legendado)"
-        const patterns = [
-            /(\d+)[ª°]\s*temporada/i,
-            /temporada\s*(\d+)/i,
-            /^(\d+)\s*temporada/i,
-            /prel[úu]dio/i // Prelúdio = Temporada 0 ou 1
-        ];
-
-        for (const pattern of patterns) {
-            const match = text.match(pattern);
-            if (match) {
-                if (pattern.toString().includes('prel')) {
-                    console.log('✅ Prelúdio identificado como Temporada 1');
-                    return 1; // Prelúdio vira Temporada 1
-                }
-                const seasonNum = parseInt(match[1]);
-                console.log(`✅ Temporada ${seasonNum} identificada`);
-                return seasonNum;
-            }
-        }
-
-        // Fallback: tentar extrair qualquer número do texto
-        const numberMatch = text.match(/\d+/);
-        const fallback = numberMatch ? parseInt(numberMatch[0]) : 1;
-        console.log(`⚠️ Usando fallback: Temporada ${fallback}`);
-        return fallback;
-    }
-
-    // 🆕 MELHORAR: Extração de episódios da temporada
-    extractEpisodesFromSeason(seasonMarker, seasonNumber) {
-        const episodes = [];
-        let currentElement = this.getNextSibling(seasonMarker);
-        let episodeCount = 0;
-        const maxEpisodesPerSeason = 100; // Aumentado para séries longas
-
-        console.log(`🎬 Extraindo episódios da Temporada ${seasonNumber}...`);
-
-        while (currentElement && episodeCount < maxEpisodesPerSeason) {
-            // Parar se encontrar próxima temporada
-            if (this.isSeasonMarker(currentElement)) {
-                console.log(`🛑 Próxima temporada encontrada, parando extração da Temporada ${seasonNumber}`);
-                break;
-            }
-
-            // Verificar se é um episódio
-            if (this.isEpisodeMarker(currentElement)) {
-                const episodeData = this.parseEpisodeElement(currentElement, seasonNumber);
-                if (episodeData) {
-                    episodes.push(episodeData);
-                    episodeCount++;
-                    console.log(`✅ Episódio ${episodeData.episode} da Temporada ${seasonNumber} encontrado`);
-                }
-            }
-
-            currentElement = this.getNextSibling(currentElement);
-        }
-
-        console.log(`📦 Temporada ${seasonNumber}: ${episodes.length} episódios extraídos`);
         return episodes;
     }
 
-    // 🆕 MELHORAR: Detecção de marcadores de episódio
-    isEpisodeMarker(element) {
-        if (!element.textContent) return false;
+    // 🆕 NOVO MÉTODO: Encontrar todos os elementos possíveis de episódio
+    findAllPossibleEpisodeElements() {
+        const elements = [];
         
-        const text = element.textContent.toLowerCase().trim();
-        const isEpisode = text.includes('episódio') || 
-                         text.includes('episodio') || 
-                         /ep\s*\d+/i.test(text) ||
-                         /^e\s*\d+/i.test(text) ||
-                         /epis[oó]dio\s+\d+/i.test(text);
+        // Estratégia 1: Procurar por elementos strong com "Episódio"
+        const strongElements = document.querySelectorAll('strong');
+        strongElements.forEach(strong => {
+            if (strong.textContent.includes('Episódio')) {
+                elements.push(strong);
+            }
+        });
         
-        return isEpisode;
+        // Estratégia 2: Procurar por elementos com números de episódio
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(el => {
+            const text = el.textContent.trim();
+            if (/Episódio\s+\d+/i.test(text) && !elements.includes(el)) {
+                elements.push(el);
+            }
+        });
+        
+        // Ordenar pela posição na página
+        elements.sort((a, b) => {
+            return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+        });
+        
+        return elements;
     }
 
-    // 🆕 MELHORAR: Análise do elemento do episódio
+    // 🆕 ATUALIZAR: Método de extração de episódio mais flexível
     parseEpisodeElement(episodeElement, seasonNumber) {
-        const episodeText = episodeElement.textContent.trim();
-        console.log(`🔍 Analisando elemento de episódio: "${episodeText}"`);
+        const episodeText = episodeElement.textContent;
         
-        // Extrair número do episódio
-        const episodeMatch = episodeText.match(/epis[oó]dio\s+(\d+)/i);
+        // 🆕 PADRÃO MELHORADO: Reconhecer vários formatos
+        const episodeMatch = episodeText.match(/Episódio\s+(\d+)/i) || 
+                            episodeText.match(/Ep\.?\s*(\d+)/i) ||
+                            episodeText.match(/(\d+)(?:º|°)/i);
         
         if (!episodeMatch) {
-            console.log('❌ Número do episódio não encontrado');
+            console.log('❌ Número do episódio não encontrado em:', episodeText);
             return null;
         }
 
         const episodeNumber = parseInt(episodeMatch[1]);
         const links = this.extractLinksFromEpisode(episodeElement);
 
-        // Validar se tem links
-        const hasLinks = Object.values(links).some(link => link !== null);
-        if (!hasLinks) {
-            console.log('⚠️ Episódio sem links válidos');
+        // 🆕 VALIDAÇÃO: Só retornar se tiver links
+        if (!links.dubbed && !links.subtitled && !links.watch) {
+            console.log('⚠️ Episódio sem links válidos:', episodeNumber);
             return null;
         }
 
-        console.log(`✅ Episódio T${seasonNumber}E${episodeNumber} processado com sucesso`);
         return {
             season: seasonNumber,
             episode: episodeNumber,
@@ -732,7 +621,7 @@ class RealTimeEpisodeExtractor {
         };
     }
 
-    // 🆕 MELHORAR: Extração de links
+    // 🆕 MELHORAR: Extração de links mais robusta
     extractLinksFromEpisode(episodeElement) {
         const links = {
             dubbed: null,
@@ -740,98 +629,145 @@ class RealTimeEpisodeExtractor {
             watch: null
         };
 
-        console.log('🔗 Buscando links para o episódio...');
-
-        // Buscar links no elemento atual e nos próximos
-        let currentElement = episodeElement;
+        // Estratégia 1: Procurar nos irmãos seguintes
+        let currentElement = episodeElement.nextElementSibling;
         let linksFound = 0;
-        const maxElementsToCheck = 10;
 
-        for (let i = 0; i < maxElementsToCheck && currentElement; i++) {
-            // Buscar links no elemento atual
-            const linksInElement = currentElement.querySelectorAll('a');
-            linksInElement.forEach(link => {
-                this.processLinkElement(link, links);
-            });
-
-            // Buscar links no texto do elemento
+        while (currentElement && linksFound < 5) { // Limitar busca
             if (currentElement.tagName === 'A') {
                 this.processLinkElement(currentElement, links);
+                linksFound++;
             }
-
+            
             // Parar se encontrar próximo episódio
-            if (i > 0 && this.isEpisodeMarker(currentElement)) {
+            if (this.isEpisodeMarker(currentElement)) {
                 break;
+            }
+            
+            currentElement = currentElement.nextElementSibling;
+        }
+
+        // Estratégia 2: Procurar no container pai
+        const parent = episodeElement.parentElement;
+        if (parent) {
+            const linksInParent = parent.querySelectorAll('a');
+            linksInParent.forEach(link => {
+                this.processLinkElement(link, links);
+            });
+        }
+
+        // Estratégia 3: Procurar nos próximos elementos
+        let nextElement = episodeElement.nextElementSibling;
+        for (let i = 0; i < 10 && nextElement; i++) {
+            if (nextElement.tagName === 'A') {
+                this.processLinkElement(nextElement, links);
+            }
+            nextElement = nextElement.nextElementSibling;
+        }
+
+        console.log('🔗 Links encontrados para episódio:', links);
+        return links;
+    }
+
+    // 🆕 NOVO MÉTODO: Processar elemento de link
+    processLinkElement(linkElement, links) {
+        const href = linkElement.getAttribute('href');
+        if (!href) return;
+
+        const linkText = linkElement.textContent.toLowerCase();
+        const cleanUrl = this.cleanUrl(href);
+
+        if (linkText.includes('dublado')) {
+            links.dubbed = cleanUrl;
+        } else if (linkText.includes('legendado')) {
+            links.subtitled = cleanUrl;
+        } else if (linkText.includes('assistir') || linkText === 'assistir') {
+            links.watch = cleanUrl;
+        } else if (!links.watch) {
+            // Se não tem label específica, usar como link padrão
+            links.watch = cleanUrl;
+        }
+    }
+
+    // 🆕 MELHORAR: Detecção de marcadores de episódio
+    isEpisodeMarker(element) {
+        if (element.tagName === 'STRONG') {
+            return element.textContent.includes('Episódio');
+        }
+        if (element.innerHTML) {
+            return element.innerHTML.includes('<strong>Episódio') || 
+                   /Episódio\s+\d+/i.test(element.textContent);
+        }
+        return false;
+    }
+
+    // 🆕 MELHORAR: Encontrar marcadores de temporada
+    findSeasonMarkers() {
+        const markers = [];
+        
+        // Estratégia original
+        const largeSpans = document.querySelectorAll('span[style*="font-size: x-large"]');
+        largeSpans.forEach(span => {
+            const strongElement = span.querySelector('strong');
+            if (strongElement && strongElement.textContent.includes('Temporada')) {
+                markers.push(strongElement);
+            }
+        });
+
+        const alternativeMarkers = document.querySelectorAll('strong');
+        alternativeMarkers.forEach(strong => {
+            const text = strong.textContent.trim();
+            if ((text.includes('Temporada') || text.includes('ª Temporada')) && 
+                !markers.includes(strong)) {
+                markers.push(strong);
+            }
+        });
+
+        console.log('🏷️ Marcadores de temporada encontrados:', markers.length);
+        return markers.sort((a, b) => {
+            return this.getElementPosition(a) - this.getElementPosition(b);
+        });
+    }
+
+    // Resto dos métodos permanecem iguais...
+    getElementPosition(element) {
+        return element.getBoundingClientRect().top;
+    }
+
+    extractSeasonNumber(text) {
+        const match = text.match(/(\d+)[ªa]/);
+        return match ? parseInt(match[1]) : 1;
+    }
+
+    extractEpisodesFromSeason(seasonMarker, seasonNumber) {
+        const episodes = [];
+        let currentElement = seasonMarker.parentElement.nextElementSibling;
+
+        while (currentElement) {
+            if (this.isSeasonMarker(currentElement)) break;
+
+            if (this.isEpisodeMarker(currentElement)) {
+                const episodeData = this.parseEpisodeElement(currentElement, seasonNumber);
+                if (episodeData) episodes.push(episodeData);
             }
 
             currentElement = currentElement.nextElementSibling;
         }
 
-        console.log(`📎 Links encontrados: ${Object.values(links).filter(link => link !== null).length}`);
-        return links;
+        return episodes;
     }
 
-    // 🆕 MELHORAR: Processamento de elemento de link
-    processLinkElement(linkElement, links) {
-        const href = linkElement.getAttribute('href');
-        if (!href) return;
-
-        const linkText = linkElement.textContent.toLowerCase().trim();
-        const cleanUrl = this.cleanUrl(href);
-
-        console.log(`🔗 Processando link: "${linkText}" -> ${cleanUrl}`);
-
-        if (linkText.includes('dublado')) {
-            if (!links.dubbed) {
-                links.dubbed = cleanUrl;
-                console.log('🎯 Link dublado definido');
-            }
-        } else if (linkText.includes('legendado')) {
-            if (!links.subtitled) {
-                links.subtitled = cleanUrl;
-                console.log('🎯 Link legendado definido');
-            }
-        } else if (linkText.includes('assistir') || linkText === 'assistir' || linkText === '') {
-            if (!links.watch) {
-                links.watch = cleanUrl;
-                console.log('🎯 Link assistir definido');
-            }
+    isSeasonMarker(element) {
+        if (element.querySelector && element.querySelector('strong')) {
+            const strongText = element.querySelector('strong').textContent;
+            return strongText.includes('Temporada');
         }
-
-        // Fallback: usar como link principal se não tiver nenhum
-        if (!links.watch && href) {
-            links.watch = cleanUrl;
-            console.log('🎯 Link fallback definido');
-        }
-    }
-
-    // 🆕 MELHORAR: Navegação entre elementos
-    getNextSibling(element) {
-        if (element.nextElementSibling) {
-            return element.nextElementSibling;
-        }
-        
-        // Fallback para navegação mais robusta
-        let parent = element.parentElement;
-        while (parent) {
-            const nextSibling = parent.nextElementSibling;
-            if (nextSibling) {
-                return nextSibling;
-            }
-            parent = parent.parentElement;
-        }
-        
-        return null;
-    }
-
-    getElementPosition(element) {
-        const rect = element.getBoundingClientRect();
-        return rect.top + window.scrollY;
+        return false;
     }
 
     cleanUrl(url) {
         if (!url) return null;
-        return url.startsWith('http') ? url : `${this.baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+        return url.startsWith('http') ? url : `${this.baseUrl}${url}`;
     }
 
     organizeEpisodes(episodes) {
@@ -842,7 +778,6 @@ class RealTimeEpisodeExtractor {
                 organized[ep.season] = {};
             }
 
-            // Manter o episódio com mais links encontrados
             if (!organized[ep.season][ep.episode]) {
                 organized[ep.season][ep.episode] = {
                     season: ep.season,
@@ -850,21 +785,12 @@ class RealTimeEpisodeExtractor {
                     links: ep.links
                 };
             } else {
-                // Combinar links de diferentes extrações
-                const existing = organized[ep.season][ep.episode];
-                Object.keys(ep.links).forEach(linkType => {
-                    if (ep.links[linkType] && !existing.links[linkType]) {
-                        existing.links[linkType] = ep.links[linkType];
-                    }
-                });
+                // Mesclar links se encontrar duplicatas
+                Object.assign(organized[ep.season][ep.episode].links, ep.links);
             }
         });
 
-        console.log(`🎯 Organização final: ${Object.keys(organized).length} temporadas`);
-        Object.keys(organized).forEach(season => {
-            console.log(`   Temporada ${season}: ${Object.keys(organized[season]).length} episódios`);
-        });
-
+        console.log('📊 Episódios organizados:', organized);
         return organized;
     }
 }
