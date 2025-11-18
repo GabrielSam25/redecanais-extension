@@ -638,10 +638,15 @@ class RealTimeEpisodeExtractor {
         if (!element.textContent) return false;
         
         const text = element.textContent.toLowerCase().trim();
+        
+        // Padrões de episódio - agora inclui o formato "Ben 10 - Episódio 40 - Dia Perfeito"
         return text.includes('episódio') || 
                text.includes('episodio') || 
                /ep\s*\d+/i.test(text) ||
-               /^e\s*\d+/i.test(text);
+               /^e\s*\d+/i.test(text) ||
+               // Novo padrão: "Nome da Série - Episódio XX - Título"
+               /- epis[oó]dio \d+ -/i.test(text) ||
+               /\bepis[oó]dio\s+\d+/i.test(text);
     }
 
     findNestedEpisodes(element, seasonNumber) {
@@ -649,7 +654,7 @@ class RealTimeEpisodeExtractor {
         
         // Buscar por elementos de episódio dentro do elemento atual
         const episodeElements = Array.from(element.querySelectorAll('*')).filter(el => 
-            this.isEpisodeMarker(el) && el.textContent.trim().length < 100
+            this.isEpisodeMarker(el) && el.textContent.trim().length < 200 // Aumentei o limite para caber títulos mais longos
         );
 
         episodeElements.forEach(epElement => {
@@ -663,15 +668,20 @@ class RealTimeEpisodeExtractor {
     }
 
     parseEpisodeElement(episodeElement, seasonNumber) {
-        const episodeText = episodeElement.textContent;
+        const episodeText = episodeElement.textContent.trim();
+        console.log(`🔍 Analisando elemento de episódio: "${episodeText}"`);
         
         // Extrair número do episódio - múltiplos padrões
         const episodePatterns = [
-            /epis[oó]dio\s*(\d+)/i,
+            // Padrão "Ben 10 - Episódio 40 - Dia Perfeito"
+            /epis[oó]dio\s+(\d+)/i,
+            // Padrões gerais
             /ep\s*(\d+)/i,
             /e\s*(\d+)/i,
             /^(\d+)$/,
-            /[^\d](\d+)[^\d]*$/
+            /[^\d](\d+)[^\d]*$/,
+            // Fallback: qualquer número no texto (como último recurso)
+            /(\d+)/
         ];
 
         let episodeNumber = null;
@@ -679,6 +689,7 @@ class RealTimeEpisodeExtractor {
             const match = episodeText.match(pattern);
             if (match) {
                 episodeNumber = parseInt(match[1]);
+                console.log(`✅ Número do episódio encontrado: ${episodeNumber} (padrão: ${pattern})`);
                 break;
             }
         }
@@ -695,6 +706,10 @@ class RealTimeEpisodeExtractor {
             const nearbyLinks = this.findNearbyLinks(episodeElement);
             Object.assign(links, nearbyLinks);
         }
+
+        // Log para debug
+        const foundLinks = Object.values(links).filter(link => link !== null).length;
+        console.log(`📎 Links encontrados para E${episodeNumber}: ${foundLinks}`);
 
         return {
             season: seasonNumber,
@@ -720,7 +735,7 @@ class RealTimeEpisodeExtractor {
         // Buscar links nos elementos irmãos próximos
         let currentSibling = episodeElement.nextElementSibling;
         let siblingCount = 0;
-        const maxSiblings = 5;
+        const maxSiblings = 8; // Aumentei para capturar mais links
 
         while (currentSibling && siblingCount < maxSiblings) {
             if (currentSibling.tagName === 'A') {
@@ -739,6 +754,23 @@ class RealTimeEpisodeExtractor {
             siblingCount++;
         }
 
+        // Também verificar elementos anteriores (para casos onde o link está antes do texto)
+        let prevSibling = episodeElement.previousElementSibling;
+        let prevSiblingCount = 0;
+        const maxPrevSiblings = 3;
+
+        while (prevSibling && prevSiblingCount < maxPrevSiblings) {
+            if (prevSibling.tagName === 'A') {
+                this.processLinkElement(prevSibling, links);
+            } else {
+                const nestedLinks = prevSibling.querySelectorAll('a');
+                nestedLinks.forEach(link => this.processLinkElement(link, links));
+            }
+
+            prevSibling = prevSibling.previousElementSibling;
+            prevSiblingCount++;
+        }
+
         return links;
     }
 
@@ -752,7 +784,7 @@ class RealTimeEpisodeExtractor {
         // Expandir busca para elementos pais
         let parent = episodeElement.parentElement;
         let depth = 0;
-        const maxDepth = 3;
+        const maxDepth = 4; // Aumentei a profundidade
 
         while (parent && depth < maxDepth) {
             const parentLinks = parent.querySelectorAll('a');
@@ -773,16 +805,26 @@ class RealTimeEpisodeExtractor {
         const cleanUrl = this.cleanUrl(href);
 
         if (linkText.includes('dublado') || linkText.includes('dub')) {
-            links.dubbed = cleanUrl;
+            if (!links.dubbed) {
+                links.dubbed = cleanUrl;
+                console.log(`🎯 Link dublado encontrado: ${cleanUrl}`);
+            }
         } else if (linkText.includes('legendado') || linkText.includes('leg')) {
-            links.subtitled = cleanUrl;
+            if (!links.subtitled) {
+                links.subtitled = cleanUrl;
+                console.log(`🎯 Link legendado encontrado: ${cleanUrl}`);
+            }
         } else if (linkText.includes('assistir') || linkText === 'assistir' || linkText === '') {
-            links.watch = cleanUrl;
+            if (!links.watch) {
+                links.watch = cleanUrl;
+                console.log(`🎯 Link assistir encontrado: ${cleanUrl}`);
+            }
         }
 
         // Fallback: se não identificou o tipo, usar como link principal
         if (!links.watch && href) {
             links.watch = cleanUrl;
+            console.log(`🎯 Link fallback encontrado: ${cleanUrl}`);
         }
     }
 
