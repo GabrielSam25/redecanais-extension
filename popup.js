@@ -33,7 +33,7 @@ class PopupController {
     }
 
     isValidSite() {
-        return this.currentTab?.url?.includes('redecanais.lc');
+        return this.currentTab?.url?.includes('redecanais.pe');
     }
 
     detectEpisodeFromUrl() {
