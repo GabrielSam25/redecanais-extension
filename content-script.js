@@ -492,7 +492,7 @@ class VideoJSAutoPlayer {
 
 class RealTimeEpisodeExtractor {
     constructor() {
-        this.baseUrl = 'https://redecanais';
+        this.baseUrl = 'https://redecanais.fm';
     }
 
     extractRealTimeLinks() {
